@@ -1,0 +1,19 @@
+Dataset:
+    BatchSize: 64
+    Workers: 2
+    ImageSize: 28
+    Channels: 1
+
+Training:
+    GPUs: 1
+    AdamBeta1: 0.5
+    GeneratorLR: 0.0001
+    DiscriminatorLR: 0.00002
+    N_EPOCHS: 60
+
+Generator:
+    NoiseDim: 100
+    GeneratorFilters: 64
+
+Discriminator:
+    DiscriminatorFilters: 64
