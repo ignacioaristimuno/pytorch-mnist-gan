@@ -23,7 +23,7 @@ class VanillaGenerator(nn.Module):
     def __init__(self, noise_dim: int, n_gpus: int, output_image_dim: int = 28 * 28):
         super(VanillaGenerator, self).__init__()
         self.logger = custom_logger(self.__class__.__name__)
-        self.logger.info(f"Using Vanilla Generator")
+        self.logger.info(f"Using Vanilla Generator for MNIST")
         self.n_gpus = n_gpus
         self.noise_dim = noise_dim
         self.n_out = output_image_dim

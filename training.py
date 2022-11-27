@@ -7,30 +7,31 @@ from torch.autograd import Variable
 from tqdm import tqdm
 
 
-def train(
-        dataloader: DataLoader,
-        generator,
-        discriminator,
-        device,
-        gen_optimizer,
-        disc_optimizer,
-        loss_function,
-        noise_dim: int,
-        n_epochs: int,
-        fixed_noise) -> None:
+def train_gan(
+    dataloader: DataLoader,
+    generator,
+    discriminator,
+    device,
+    gen_optimizer,
+    disc_optimizer,
+    loss_function,
+    noise_dim: int,
+    n_epochs: int,
+    fixed_noise,
+) -> None:
     """Function for handling training of both the Generator and Discriminator networks"""
 
-    SAVE_RESULTS_PATH = 'results/MNIST_DCGAN'
+    SAVE_RESULTS_PATH = "results/MNIST_DCGAN"
 
     num_iter = 0
     train_hist = {
-        'D_losses': [],
-        'G_losses': [],
-        'epochs_times': [],
-        'total_training_time': []
+        "D_losses": [],
+        "G_losses": [],
+        "epochs_times": [],
+        "total_training_time": [],
     }
 
-    print('Starting training!')
+    print("Starting training!")
     start_time = time.time()
     for epoch in range(n_epochs):
         D_losses = []
@@ -50,7 +51,11 @@ def train(
             D_real_loss = loss_function(D_result, y_real)
 
             # Fake images
-            fake_images = torch.randn((mini_batch, 100), device=device).view(-1, noise_dim, 1, 1).detach()
+            fake_images = (
+                torch.randn((mini_batch, 100), device=device)
+                .view(-1, noise_dim, 1, 1)
+                .detach()
+            )
             y_fake = torch.zeros(mini_batch, device=device)
             G_result = generator(fake_images)
 
@@ -68,7 +73,9 @@ def train(
             generator.zero_grad()
 
             # Fake images
-            fake_images = torch.randn((mini_batch, 100), device=device).view(-1, noise_dim, 1, 1)
+            fake_images = torch.randn((mini_batch, 100), device=device).view(
+                -1, noise_dim, 1, 1
+            )
 
             G_result = generator(fake_images)
             D_result = discriminator(G_result).squeeze()
@@ -79,38 +86,54 @@ def train(
 
             G_train_loss.backward()
             gen_optimizer.step()
-            
+
             num_iter += 1
 
         epoch_end_time = time.time()
         epoch_time = epoch_end_time - epoch_start_time
 
-
-        print('[%d/%d] - ptime: %.2f, loss_d: %.3f, loss_g: %.3f' % ((epoch + 1), n_epochs, epoch_time, torch.mean(torch.FloatTensor(D_losses)),
-                                                                torch.mean(torch.FloatTensor(G_losses))))
-        #p = 'MNIST_DCGAN_results/Random_results/MNIST_DCGAN_' + str(epoch + 1) + '.png'
-        #fixed_p = 'MNIST_DCGAN_results/Fixed_results/MNIST_DCGAN_' + str(epoch + 1) + '.png'
+        print(
+            "[%d/%d] - ptime: %.2f, loss_d: %.3f, loss_g: %.3f"
+            % (
+                (epoch + 1),
+                n_epochs,
+                epoch_time,
+                torch.mean(torch.FloatTensor(D_losses)),
+                torch.mean(torch.FloatTensor(G_losses)),
+            )
+        )
+        # p = 'MNIST_DCGAN_results/Random_results/MNIST_DCGAN_' + str(epoch + 1) + '.png'
+        # fixed_p = 'MNIST_DCGAN_results/Fixed_results/MNIST_DCGAN_' + str(epoch + 1) + '.png'
         # show_result((epoch+1), save=True, path=p, isFix=False)
         # show_result((epoch+1), save=True, path=fixed_p, isFix=True)
-        train_hist['D_losses'].append(torch.mean(torch.FloatTensor(D_losses)))
-        train_hist['G_losses'].append(torch.mean(torch.FloatTensor(G_losses)))
-        train_hist['epochs_times'].append(epoch_time)
+        train_hist["D_losses"].append(torch.mean(torch.FloatTensor(D_losses)))
+        train_hist["G_losses"].append(torch.mean(torch.FloatTensor(G_losses)))
+        train_hist["epochs_times"].append(epoch_time)
 
     end_time = time.time()
     total_training_time = end_time - start_time
-    train_hist['total_training_time'].append(total_training_time)
+    train_hist["total_training_time"].append(total_training_time)
 
-    print("Avg time per epoch: %.2f, total %d total training time: %.2f" % (torch.mean(torch.FloatTensor(train_hist['total_training_time'])), n_epochs, total_training_time))
+    print(
+        "Avg time per epoch: %.2f, total %d total training time: %.2f"
+        % (
+            torch.mean(torch.FloatTensor(train_hist["total_training_time"])),
+            n_epochs,
+            total_training_time,
+        )
+    )
     print("Training finish!... save training results")
     torch.save(generator.state_dict(), f"{SAVE_RESULTS_PATH}/generator_param.pkl")
-    torch.save(discriminator.state_dict(), f"{SAVE_RESULTS_PATH}/discriminator_param.pkl")
-    with open(f'{SAVE_RESULTS_PATH}/train_hist.pkl', 'wb') as f:
+    torch.save(
+        discriminator.state_dict(), f"{SAVE_RESULTS_PATH}/discriminator_param.pkl"
+    )
+    with open(f"{SAVE_RESULTS_PATH}/train_hist.pkl", "wb") as f:
         pickle.dump(train_hist, f)
 
     # show_train_hist(train_hist, save=True, path='MNIST_DCGAN_results/MNIST_DCGAN_train_hist.png')
 
     # images = []
-    #for e in range(n_epochs):
+    # for e in range(n_epochs):
     #    img_name = f'{SAVE_RESULTS_PATH}/fixed_results/MNIST_DCGAN_' + str(e + 1) + '.png'
     #    images.append(imageio.imread(img_name))
-    #imageio.mimsave(f'{SAVE_RESULTS_PATH}/generation_animation.gif', images, fps=5)
+    # imageio.mimsave(f'{SAVE_RESULTS_PATH}/generation_animation.gif', images, fps=5)

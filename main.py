@@ -7,7 +7,8 @@ from torch import optim
 from torch import nn
 import torch.backends.cudnn as cudnn
 
-from datasets.mnist_dataset import get_dataloader
+from datasets.mnist_dataset import get_mnist_dataloader
+from datasets.cifar10_dataset import get_cifar_dataloader
 from models.dcgan.generator import DCGANGenerator, get_dcgan_generator_defaults
 from models.dcgan.discriminator import (
     DCGANDiscriminator,
@@ -18,11 +19,17 @@ from models.vanilla.discriminator import (
     VanillaDiscriminator,
     get_vanilla_discriminator_defaults,
 )
-from training import train
+from models.cifar10.generator import CIFARGenerator, get_cifar_generator_defaults
+from models.cifar10.discriminator import (
+    CIFARDiscriminator,
+    get_cifar_discriminator_defaults,
+)
+from training import train_gan
+from models.available_models import Task, GANModel
 
 
-network = "vanilla"
-training_settings = "VanillaGAN"
+# Select which GAN to train
+model_settings = GANModel(model=Task.VANILLA_MNIST.value)
 
 
 # Set random seed for reproducibility
@@ -43,10 +50,10 @@ NOISE_DIM = settings["Generator"]["NoiseDim"]
 BATCH_SIZE = settings["Dataset"]["BatchSize"]
 N_WORKERS = settings["Dataset"]["Workers"]
 
-N_EPOCHS = settings["Training"][training_settings]["N_EPOCHS"]
-GENERATOR_LR = settings["Training"][training_settings]["GeneratorLR"]
-DISCRIMINATOR_LR = settings["Training"][training_settings]["DiscriminatorLR"]
-ADAM_BETA_1 = settings["Training"][training_settings]["AdamBeta1"]
+N_EPOCHS = settings["Training"][model_settings.configs]["N_EPOCHS"]
+GENERATOR_LR = settings["Training"][model_settings.configs]["GeneratorLR"]
+DISCRIMINATOR_LR = settings["Training"][model_settings.configs]["DiscriminatorLR"]
+ADAM_BETA_1 = settings["Training"][model_settings.configs]["AdamBeta1"]
 
 
 # Device
@@ -58,7 +65,10 @@ DEVICE = torch.device(DEVICE)
 
 
 # DataLoader
-dataloader = get_dataloader(BATCH_SIZE, N_WORKERS)
+if model_settings.model == "CIFAR":
+    dataloader = get_cifar_dataloader(BATCH_SIZE, N_WORKERS)
+else:
+    dataloader = get_mnist_dataloader(BATCH_SIZE, N_WORKERS)
 
 
 # Weights initialization
@@ -72,23 +82,27 @@ def weights_initialization(model):
 
 
 # Create Generator
-if network == "vanilla":
+if model_settings.model == "VANILLA_MNIST":
     generator = VanillaGenerator(**get_vanilla_generator_defaults()).to(DEVICE)
-elif network == "DCGAN":
+elif model_settings.model == "DCGAN_MNIST":
     generator = DCGANGenerator(**get_dcgan_generator_defaults()).to(DEVICE)
     generator.apply(weights_initialization)
+elif model_settings.model == "CIFAR_MNIST":
+    generator = CIFARGenerator(**get_cifar_generator_defaults()).to(DEVICE)
 
 print(generator)
 
 
 # Create Discriminator
-if network == "vanilla":
+if model_settings.model == "VANILLA_MNIST":
     discriminator = VanillaDiscriminator(**get_vanilla_discriminator_defaults()).to(
         DEVICE
     )
-elif network == "DCGAN":
+elif model_settings.model == "DCGAN_MNIST":
     discriminator = DCGANDiscriminator(**get_dcgan_discriminator_defaults()).to(DEVICE)
     discriminator.apply(weights_initialization)
+elif model_settings.model == "CIFAR_MNIST":
+    generator = CIFARDiscriminator(**get_cifar_discriminator_defaults()).to(DEVICE)
 
 print(discriminator)
 
@@ -113,10 +127,7 @@ optimizerD = optim.Adam(
 
 
 # Folders for saving results
-if network == "vanilla":
-    RESULTS_FOLDER = "results/MNIST_vanilla"
-elif network == "DCGAN":
-    RESULTS_FOLDER = "results/MNIST_DCGAN"
+RESULTS_FOLDER = f"results/{model_settings.model}"
 
 if not os.path.isdir(RESULTS_FOLDER):
     os.makedirs(RESULTS_FOLDER, exist_ok=True)
@@ -127,7 +138,7 @@ if not os.path.isdir(f"{RESULTS_FOLDER}/fixed_results"):
 
 
 # Training
-train(
+train_gan(
     dataloader,
     generator,
     discriminator,
@@ -157,7 +168,7 @@ columns = 5
 # Plot results
 for k, array in enumerate(G_result):
     ax = plt.subplot(rows, columns, k + 1)
-    im = ax.imshow(array.reshape(28, 28))
+    im = ax.imshow(array.reshape(28, 28), cmap="gray")
 
     plt.tight_layout()
 plt.show()
