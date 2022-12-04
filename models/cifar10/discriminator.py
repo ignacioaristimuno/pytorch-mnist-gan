@@ -12,7 +12,7 @@ def get_cifar_discriminator_defaults():
 
     discriminator_settings = {
         "disc_filters": settings["Discriminator"]["DiscriminatorFilters"],
-        "n_channels": settings["Dataset"]["Channels"],
+        "n_channels": settings["Dataset"]["Channels"]["CIFAR"],
         "n_gpus": settings["Training"]["GPUs"],
     }
     return discriminator_settings
@@ -26,54 +26,22 @@ class CIFARDiscriminator(nn.Module):
         self.logger = custom_logger(self.__class__.__name__)
         self.logger.info(f"Using DCGAN for CIFAR as Discriminator")
         self.ngpu = n_gpus
+
         self.sequential = nn.Sequential(
-            # Converts input image (64, 64, 3) into (32, 32, 3)
-            nn.Conv2d(
-                n_channels, disc_filters, kernel_size=4, stride=2, padding=1, bias=False
-            ),
+            # Conv Params: in_channels, out_channels, kernel_size, stride, padding, bias
+            nn.Conv2d(n_channels, disc_filters, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(disc_filters),
             nn.LeakyReLU(0.2, inplace=True),
-            # Converts (32, 32, 3) into (16, 16, 3*2)
-            nn.Conv2d(
-                disc_filters,
-                disc_filters * 2,
-                kernel_size=4,
-                stride=2,
-                padding=1,
-                bias=False,
-            ),
+            nn.Conv2d(disc_filters, disc_filters * 2, 4, 2, 1, bias=False),
             nn.BatchNorm2d(disc_filters * 2),
             nn.LeakyReLU(0.2, inplace=True),
-            # Converts (16, 16, 3*2) into (8, 8, 3*4)
-            nn.Conv2d(
-                disc_filters * 2,
-                disc_filters * 4,
-                kernel_size=4,
-                stride=2,
-                padding=1,
-                bias=False,
-            ),
+            nn.Conv2d(disc_filters * 2, disc_filters * 4, 4, 2, 1, bias=False),
             nn.BatchNorm2d(disc_filters * 4),
             nn.LeakyReLU(0.2, inplace=True),
-            # Converts (8, 8, 3*4) into (4, 4, 3*8)
-            nn.Conv2d(
-                disc_filters * 4,
-                disc_filters * 8,
-                kernel_size=4,
-                stride=2,
-                padding=1,
-                bias=False,
-            ),
+            nn.Conv2d(disc_filters * 4, disc_filters * 8, 4, 2, 1, bias=False),
             nn.BatchNorm2d(disc_filters * 8),
             nn.LeakyReLU(0.2, inplace=True),
-            # Converts (4, 4, 3*8) into (1, 1, 1) -> Classify real or fake (not MNIST classes)
-            nn.Conv2d(
-                disc_filters * 8,
-                out_channels=1,
-                kernel_size=4,
-                stride=1,
-                padding=0,
-                bias=False,
-            ),
+            nn.Conv2d(disc_filters * 8, 1, 4, 1, 0, bias=False),
             nn.Sigmoid(),
         )
 

@@ -29,7 +29,7 @@ from models.available_models import Task, GANModel
 
 
 # Select which GAN to train
-model_settings = GANModel(model=Task.VANILLA_MNIST.value)
+model_settings = GANModel(model=Task.CIFAR_MNIST.value)
 
 
 # Set random seed for reproducibility
@@ -57,7 +57,6 @@ ADAM_BETA_1 = settings["Training"][model_settings.configs]["AdamBeta1"]
 
 
 # Device
-# DEVICE = 'mps' if torch.backends.mps.is_available() else 'cuda' if torch.cuda.is_available() else 'cpu'
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Current device: {DEVICE.upper()}")
 
@@ -65,7 +64,7 @@ DEVICE = torch.device(DEVICE)
 
 
 # DataLoader
-if model_settings.model == "CIFAR":
+if model_settings.configs == "CIFAR":
     dataloader = get_cifar_dataloader(BATCH_SIZE, N_WORKERS)
 else:
     dataloader = get_mnist_dataloader(BATCH_SIZE, N_WORKERS)
@@ -102,7 +101,7 @@ elif model_settings.model == "DCGAN_MNIST":
     discriminator = DCGANDiscriminator(**get_dcgan_discriminator_defaults()).to(DEVICE)
     discriminator.apply(weights_initialization)
 elif model_settings.model == "CIFAR_MNIST":
-    generator = CIFARDiscriminator(**get_cifar_discriminator_defaults()).to(DEVICE)
+    discriminator = CIFARDiscriminator(**get_cifar_discriminator_defaults()).to(DEVICE)
 
 print(discriminator)
 

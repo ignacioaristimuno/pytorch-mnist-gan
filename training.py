@@ -3,8 +3,12 @@ import pickle
 import time
 import torch
 from torch.utils.data import DataLoader
-from torch.autograd import Variable
 from tqdm import tqdm
+
+from logger import custom_logger
+
+
+logger = custom_logger("Training loop")
 
 
 def train_gan(
@@ -31,7 +35,7 @@ def train_gan(
         "total_training_time": [],
     }
 
-    print("Starting training!")
+    logger.info("Starting training!")
     start_time = time.time()
     for epoch in range(n_epochs):
         D_losses = []
@@ -43,6 +47,7 @@ def train_gan(
             discriminator.zero_grad()
 
             # Real images
+            logger.debug(f"Real images size: {real_images.size()[0]}")
             mini_batch = real_images.size()[0]
             real_images = real_images.to(device)
             y_real = torch.ones(mini_batch, device=device)
@@ -58,8 +63,10 @@ def train_gan(
             )
             y_fake = torch.zeros(mini_batch, device=device)
             G_result = generator(fake_images)
+            logger.debug(f"Generator images shape: {G_result.shape}")
 
-            D_result = discriminator(G_result).squeeze()
+            D_result = discriminator(G_result)  # .squeeze()
+            logger.debug(f"Discriminator images shape: {D_result.shape}")
             D_fake_loss = loss_function(D_result, y_fake)
 
             # Loss calculations and backprop
@@ -92,7 +99,7 @@ def train_gan(
         epoch_end_time = time.time()
         epoch_time = epoch_end_time - epoch_start_time
 
-        print(
+        logger.info(
             "[%d/%d] - ptime: %.2f, loss_d: %.3f, loss_g: %.3f"
             % (
                 (epoch + 1),

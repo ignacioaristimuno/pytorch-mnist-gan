@@ -12,7 +12,7 @@ def get_dcgan_discriminator_defaults():
 
     discriminator_settings = {
         "disc_filters": settings["Discriminator"]["DiscriminatorFilters"],
-        "n_channels": settings["Dataset"]["Channels"],
+        "n_channels": settings["Dataset"]["Channels"]["MNIST"],
         "n_gpus": settings["Training"]["GPUs"],
     }
     return discriminator_settings

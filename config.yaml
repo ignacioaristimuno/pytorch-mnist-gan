@@ -2,7 +2,9 @@ Dataset:
     BatchSize: 64
     Workers: 2
     ImageSize: 28
-    Channels: 1
+    Channels:
+        MNIST: 1
+        CIFAR: 3
 
 Training:
     GPUs: 1
