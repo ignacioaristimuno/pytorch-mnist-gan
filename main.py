@@ -148,6 +148,7 @@ train_gan(
     NOISE_DIM,
     N_EPOCHS,
     None,
+    RESULTS_FOLDER,
 )
 
 
